@@ -18,6 +18,39 @@ DEFAULT_TMP_DIR = "/tmp/mujicachk_sock/"
 SUCCESS_CODE = "OK"
 ERROR_CODE = "ERROR"
 
+def retry_socket(func):
+    def wrapper(self, *args, **kwargs):
+        retry = kwargs.get("retry", 30)  
+        succeed = False
+        for i in range(retry):
+            try:
+                result = func(self, *args, **kwargs)  
+                succeed = True  
+                return result  
+            except (FileNotFoundError, ConnectionRefusedError):
+                time.sleep(1)  
+        if not succeed:
+            return func(self, *args, **kwargs)  
+
+    return wrapper
+
+def _create_socket_server(path):
+    """
+    Create a socket server
+
+    Args:
+        path (str) : a file path.
+    """
+    server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    path_dir = os.path.dirname(path)
+    os.makedirs(path_dir, exist_ok=True)
+    if os.path.exists(path):
+        os.unlink(path)
+    server.bind(path)
+    server.listen(0)
+    return server
+
+
 class LocalSocketComm(metaclass=ABCMeta):
     """
     Local socket for processes to communicate.
@@ -105,3 +138,4 @@ class SharedMemory(shared_memory.SharedMemory):
             except FileNotFoundError:
                 pass
     
+

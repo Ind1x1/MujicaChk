@@ -1,10 +1,11 @@
-# import sys
-# import os
+import sys
+import os
 
-# project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-# sys.path.insert(0, project_path)
+project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_path)
 
-from MujicaChk.utils.rank_logger import RankLogger
+from utils.rank_logger import RankLogger
+# from MujicaChk.utils.rank_logger import RankLogger
 
 def main():
     rank_logger = RankLogger()

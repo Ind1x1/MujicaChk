@@ -15,11 +15,11 @@ class RankLogger:
         if not self.logger.hasHandlers():
             self.logger.addHandler(console_handler)
 
-    def print_rank0_info(self, message: str, local_rank: int = 0):
+    def info_0(self, message: str, local_rank: int = 0):
         """ Print info messages only if local_rank is 0. """
         if local_rank == 0:
             self.logger.info(message, extra={'rank': local_rank})
 
-    def print_info(self, message: str, global_rank: int):
+    def info(self, message: str, global_rank: int):
         """ Print messages with the given global rank. """
         self.logger.info(message, extra={'rank': global_rank})
