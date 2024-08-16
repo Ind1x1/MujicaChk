@@ -24,7 +24,7 @@ from utils.time_utils import (
 from common.constants import CheckpointConstant
 
 from utils.chk_utils import TensorMeta
-from utils.rank_logger import RankLogger as log
+from utils.log import default_logger as logger
 from utils import env_utils
 
 import torch
@@ -107,34 +107,53 @@ class CheckpointEngine(metaclass=ABCMeta):
             comm_backend: str= "",
             save_timeout: int = CheckpointConstant.SAVE_TIMEOUT
     ):
-        if not self.save_proc:
-            self.save_proc = start_saver_process()
+        # TODO this part used to Asynchronous writes. We are not needed for the time being
+        # if not self.save_proc:
+        #     self.save_proc = start_saver_process()
 
         self.checkpoint_dir = checkpoint_dir
-
         self._save_timeout = save_timeout
-        self._local_rank = 0
+        
+        self._cached_step = 0 # init step = 0 
 
-        self._cached_step = 0
-
+        self._local_rank = env_utils.get_local_rank() # IMPORTANT 本地rank
         self._world_size = 1
-        self._group_rank = 1
         self._local_size = 1
-
         # 
-        self._shm_handler = SharedMemoryEngine(self._local_size, host=False)
+       
         self._saving_ranks: Optional[List[int]] = None
         self._saver_group = None
         self._loader_group = None
+        self._init_sync_group(comm_backend)
+
+        self._shm_handler = SharedMemoryEngine(self._local_rank, host=(self._local_rank == 0))
+        """
+        My basic idea is to build a distributed checkpoint system based on DeepSpeed. 
+        The content we need to save under the ZeRO architecture is designed as follows
+        In the version 1 system, we mainly target ZeRO-1,ZeRO-2
+
+        Node1                           | Node2         
+        G0      G1      G2      G3        G4      G5      G6      G7
+        M                                 M
+        O1      O2      O3      O4        O1      O2      O3      O4
+
+        M:model
+        O[i]: partition i of optimizer
+
+        Obviously, we don't need each GPU to store its model parameters, and we don't 
+        even need to store model parameters (as long as at least one machine survives). 
+        In our design, we need to create a SharedMemoryEngine for each GPU.
+        """
 
     def _init_sync_group(self, comm_backend):
         if not dist.is_initialized():
             self._saving_ranks = [0]
             return
 
-        self._rank = dist.get_rank()
+        self._rank = dist.get_rank() # 全局rank
         self._group_rank = env_utils.get_group_rank()
         self._world_size = dist.get_world_size()
+
         backend = comm_backend if comm_backend else dist.get_backend()
         if backend == dist.get_backend():
             self._loader_group = None
@@ -143,7 +162,7 @@ class CheckpointEngine(metaclass=ABCMeta):
                 backend=backend,
                 timeout=timedelta(seconds=60),
             )
-        self._saving_ranks = self.get_saving_ranks()
+        # self._saving_ranks = self.get_saving_ranks()
         if backend == dist.get_backend() and (
             self._saving_ranks is None
             or len(self._saving_ranks) == dist.get_world_size()
@@ -180,19 +199,29 @@ class CheckpointEngine(metaclass=ABCMeta):
         self._shm_handler.close()
 
     def save_state_dict_to_memory(self, state_dict, conf:CheckpointConfig):
-        if self._local_rank != self.local_shard_id:
-            return False
-        if self._saving_ranks and self._rank not in self._saving_ranks:
-            return False
+        # if self._local_rank != self.local_shared_id:
+        #     return False
+        # if self._saving_ranks and self._rank not in self._saving_ranks:
+        #     return False
         
         conf.rank = self._rank
         conf.group_rank = self._group_rank
         conf.world_size = self._world_size
-
-        all_rank_ready = check_all_rank_ready(self._saver_group, is_ready = True)
-        self._shm_handler.save_state_dict(state_dict)
+        #all_rank_ready = check_all_rank_ready(self._saver_group, is_ready = True)
         state_dict[MUJICA_CKPT_CONFIG_KEY] = conf
+        self._shm_handler.save_state_dict(state_dict)
         self._cached_step = conf.step
+        #print(f"save_dict_print test\n",state_dict)
+        return True
 
     def get_state_dict_from_memory(self):
-        pass
+        state_dict = {}
+        default_config = CheckpointConfig()
+        # config = self._shm_handler.get_checkpoint_config(default_config)
+        state_dict = self._shm_handler.load_state_dict()
+        state_dict.pop(MUJICA_CKPT_CONFIG_KEY, None)
+        return state_dict
+    
+    # @abstractmethod
+    # def get_saving_ranks(self):
+    #     pass

@@ -135,13 +135,11 @@ class SharedMemoryEngine(object):
             # )
             self.init_meta_dict(state_dict)
             self.init_shared_memory(create=True, size=self._buffer_size)
-
         # get existing meta_dict
         # else:
         #     meta_dict = self.metadata.get(local=True)
         ckpt_conf: CheckpointConfig = self.meta_dict[MUJICA_CKPT_CONFIG_KEY]
         ckpt_conf.writing_shm = True
-
         # self.metadata.set(meta_dict)
         assert self.shared_memory is not None
         _traverse_copy_to_shm(state_dict, self.meta_dict, self.shared_memory.buf)
@@ -166,7 +164,6 @@ class SharedMemoryEngine(object):
             self.init_shared_memory(create=False)
         if not self.shared_memory:
             return {}
-        
         state_dict = _traverse_read_dict_from_shm(meta_dict, self.shared_memory)
         return state_dict
     
