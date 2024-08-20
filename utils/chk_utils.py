@@ -14,7 +14,7 @@ from typing import Callable, Dict, List, Mapping, Optional, Tuple
 import torch
 
 from common.multi_process import SharedMemory
-
+from utils.log import default_logger as logger
 
 @dataclass
 class TensorMeta:
@@ -133,4 +133,9 @@ def _create_shared_memory(name, create, size=0):
                 create=create,
                 size=size,
             )
+    # shm = SharedMemory(
+    #             name=name,
+    #             create=create,
+    #             size=size,
+    #         )
     return shm

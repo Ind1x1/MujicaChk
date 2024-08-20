@@ -51,7 +51,7 @@ class DeepSpeedCheckpointer(Checkpointer):
         if zero_stage < ZeroStageEnum.weights and self._local_rank == 0:
             self.engine.save_non_zero_checkpoint = True
 
-        self.dscheckpointer = DeepSpeedCheckpointEngine(
+        self.dscheckpointengine = DeepSpeedCheckpointEngine(
             checkpoint_dir,
             global_shard_num = global_shard_num,
             zero_stage = zero_stage,
@@ -76,13 +76,13 @@ class DeepSpeedCheckpointer(Checkpointer):
     def _save_shm_checkpoint(
         self, save_dir, tag=None, client_state={}, save_latest=True    
     ):
-        torch.save = self.dscheckpointer._save_state_dict
+        torch.save = self.dscheckpointengine._save_state_dict
         self.engine.save_checkpoint(save_dir, tag, client_state, save_latest)
         torch.save = torch_native_save
-        self.dscheckpointer.save_to_memory(
-            tag,
-            self.dscheckpointer.state_dict,
-            self.dscheckpointer.paths,
+        self.dscheckpointengine.save_to_memory(
+            self.engine.global_steps,
+            self.dscheckpointengine.state_dict,
+            self.dscheckpointengine.paths,
         )
         #self._update_tracer_file(tag)
 

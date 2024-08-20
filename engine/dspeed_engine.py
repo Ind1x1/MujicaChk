@@ -16,6 +16,7 @@ from utils.time_utils import (
     cuda_timer,
     timer
 )
+
 _DS_MODEL_SD_FILE_SUFFIX = "model_states.pt"
 _DS_OPTIM_SD_FILE_SUFFIX = "optim_states.pt"
 
@@ -100,3 +101,4 @@ class DeepSpeedCheckpointEngine(CheckpointEngine):
         conf = CheckpointConfig(step=step, paths=paths)
         success = self.save_state_dict_to_memory(state_dict, conf)
         return success
+        

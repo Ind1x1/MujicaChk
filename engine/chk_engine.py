@@ -24,7 +24,7 @@ from utils.time_utils import (
 from common.constants import CheckpointConstant
 
 from utils.chk_utils import TensorMeta
-from utils.log import default_logger as logger
+from utils.log import default_logger as log
 from utils import env_utils
 
 import torch
@@ -34,7 +34,7 @@ from common.singleton import Singleton
 
 def _local_rank0_log(local_rank, message):
     if local_rank == 0:
-        logger.info(message)
+        log.info(message)
 
 class ReadyTensor(Singleton):
     def __init__(self, device) -> None:
@@ -190,12 +190,19 @@ class CheckpointEngine(metaclass=ABCMeta):
                     "checkpoint. Saving ranks are all ranks."
                 )
             _local_rank0_log(self._local_rank, message)
+            
     
-    def __del__(self):
-        self.close()
+    # def __del__(self):
+    #     self.close()
 
     def close(self):
         """Close the shared memory."""
+        # if self._shm_handler:
+        #     try:
+        #         self._shm_handler.close()
+        #         self._shm_handler = None
+        #     except OSError as e:
+        #         print(f"Error closing shared memory: {e}")
         self._shm_handler.close()
 
     def save_state_dict_to_memory(self, state_dict, conf:CheckpointConfig):
@@ -203,7 +210,7 @@ class CheckpointEngine(metaclass=ABCMeta):
         #     return False
         # if self._saving_ranks and self._rank not in self._saving_ranks:
         #     return False
-        
+
         conf.rank = self._rank
         conf.group_rank = self._group_rank
         conf.world_size = self._world_size

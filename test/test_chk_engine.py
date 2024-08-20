@@ -22,7 +22,7 @@ from engine.shmengine import (
     SharedMemoryObjectPrefix
 )
 from utils import env_utils
-from utils.log import default_logger as logger
+from utils.log import default_logger as log
 
 class MLP(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
@@ -67,11 +67,11 @@ class SimpleCheckpointEngine(CheckpointEngine):
 
     def save(self, state_dict, path: str):
         self.save_state_dict_to_memory(state_dict, CheckpointConfig())
-        logger.info(f"Checkpoint saved to shared memory for path: {path}")
+        log.info(f"Checkpoint saved to shared memory for path: {path}")
 
     def load(self, path: str, map_location=None):
         # 简单模拟从共享内存加载的过程
-        logger.info(f"Checkpoint saved to shared memory for path: {path}")
+        log.info(f"Checkpoint saved to shared memory for path: {path}")
         return self._shm_handler.memory  # 模拟的加载
     
 def generate_dummy_data(num_samples, input_size, num_classes):
@@ -91,7 +91,7 @@ def train():
         raise ValueError("RANK, WORLD_SIZE, or LOCAL_RANK not set properly.")
     
     try:
-        logger.info(f"Process {rank} (local rank {local_rank}) started.")
+        log.info(f"Process {rank} (local rank {local_rank}) started.")
         
         # 初始化进程组
         dist.init_process_group("nccl")
@@ -108,9 +108,9 @@ def train():
         optimizer = optim.SGD(model.parameters(), lr=0.01)
         criterion = nn.CrossEntropyLoss()
 
-        logger.info(f"{rank}: -------------> Model on GPU {local_rank}")
+        log.info(f"{rank}: -------------> Model on GPU {local_rank}")
         print(model)
-        logger.info("------------------->")
+        log.info("------------------->")
 
         # 创建检查点引擎
         checkpoint_engine = SimpleCheckpointEngine(checkpoint_dir="./checkpoints", comm_backend="nccl")
@@ -133,7 +133,7 @@ def train():
             loss.backward()
             optimizer.step()
 
-            logger.info(f"Epoch [{epoch+1}/5], Loss: {loss.item():.4f}")
+            log.info(f"Epoch [{epoch+1}/5], Loss: {loss.item():.4f}")
 
             # 保存模型检查点到共享内存（包括自定义张量）
             checkpoint_engine.save(model.custom_state_dict(), f"model_epoch_{epoch}_rank_{rank}.ckpt")
@@ -141,13 +141,13 @@ def train():
         # 关闭检查点引擎
         checkpoint_engine.close()
 
-        logger.info(f"Process {rank} finished.")
+        log.info(f"Process {rank} finished.")
         
         # 销毁进程组
         dist.destroy_process_group()
 
     except Exception as e:
-        logger.error(f"Error in process {rank}: {e}")
+        log.error(f"Error in process {rank}: {e}")
         raise e
 
 if __name__ == "__main__":

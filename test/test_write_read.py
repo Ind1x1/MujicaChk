@@ -16,7 +16,7 @@ from typing import Optional, List
 from engine.chk_engine import CheckpointEngine
 
 from utils import env_utils
-from utils.log import default_logger as logger
+from utils.log import default_logger as log
 from engine.shmengine import (
     MUJICA_CKPT_CONFIG_KEY,
     SharedMemoryEngine,
