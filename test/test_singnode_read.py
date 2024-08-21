@@ -5,7 +5,7 @@ import deepspeed
 import os
 import sys
 from deepspeed.runtime.zero.parameter_offload import DeepSpeedZeRoOffload
-project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_path)
 
 def main():

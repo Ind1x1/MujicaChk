@@ -1,7 +1,7 @@
 import torch
 
-from utils.log import default_logger as logger
-from utils import env_utils
+from MujicaChk.utils.log import default_logger as logger
+from MujicaChk.utils import env_utils
 
 import time
 

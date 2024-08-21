@@ -7,11 +7,11 @@ import torch.distributed as dist
 from deepspeed.runtime.engine import DeepSpeedEngine
 from deepspeed.runtime.zero.config import ZeroStageEnum
 
-from .checkpointer import Checkpointer
-from .dspeed_engine import DeepSpeedCheckpointEngine
+from MujicaChk.engine.checkpointer import Checkpointer
+from MujicaChk.engine.dspeed_engine import DeepSpeedCheckpointEngine
 
-from utils import env_utils
-from common.constants import CheckpointConstant
+from MujicaChk.utils import env_utils
+from MujicaChk.common.constants import CheckpointConstant
 
 
 torch_native_save = torch.save
@@ -85,6 +85,23 @@ class DeepSpeedCheckpointer(Checkpointer):
             self.dscheckpointengine.paths,
         )
         #self._update_tracer_file(tag)
+    """
+    *********load part***********
+    """
+    def load_checkpoint(
+        self,
+        load_dir,
+        tag=None,
+        load_module_strict=True,
+        load_optimizer_states=True,
+        load_lr_scheduler_states=True,
+        load_module_only=False,
+        custom_load_fn=None,
+    ):
+        """
+        Load a checkpointing state dict
 
-    def load_checkpoint(self):
-        pass
+        Args:
+            the same as the DeepSpeed Engine.LOAD_CHECKPOINT
+        """
+        

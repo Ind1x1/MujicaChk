@@ -11,19 +11,19 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Callable, Dict, List, Mapping, Optional, Tuple
 
-from common.constants import CheckpointConstant
+from MujicaChk.common.constants import CheckpointConstant
 
-from utils.env_utils import(
+from MujicaChk.utils.env_utils import(
     get_local_rank,
     get_group_rank,
 )
 
-from common.multi_process import(
+from MujicaChk.common.multi_process import(
     SharedMemory,
     CheckpointDict,
 )
-from utils.log import default_logger as log
-from utils.chk_utils import(
+from MujicaChk.utils.log import default_logger as log
+from MujicaChk.utils.chk_utils import(
     TensorMeta,
     _read_shared_memory,
     _traverse_read_dict_from_shm,

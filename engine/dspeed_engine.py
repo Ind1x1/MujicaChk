@@ -1,18 +1,18 @@
 import copy
 from typing import Dict
-from utils import env_utils
-from .chk_engine import CheckpointEngine
-from common.constants import CheckpointConstant
-from .checkpointer import Checkpointer
+from MujicaChk.utils import env_utils
+from MujicaChk.engine.chk_engine import CheckpointEngine
+from MujicaChk.common.constants import CheckpointConstant
+from MujicaChk.engine.checkpointer import Checkpointer
 
-from engine.shmengine import (
+from MujicaChk.engine.shmengine import (
     MUJICA_CKPT_CONFIG_KEY,
     SharedMemoryEngine,
     CheckpointConfig,
     SharedMemoryObjectPrefix
 )
 
-from utils.time_utils import (
+from MujicaChk.utils.time_utils import (
     cuda_timer,
     timer
 )

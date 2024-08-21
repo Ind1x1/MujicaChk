@@ -8,10 +8,10 @@ from deepspeed.runtime.zero.parameter_offload import DeepSpeedZeRoOffload
 import time
 import traceback
 import multiprocessing
-project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 sys.path.insert(0, project_path)
-from engine.dspeed import DeepSpeedCheckpointer
-
+from MujicaChk.engine.dspeed import DeepSpeedCheckpointer
+from MujicaChk.utils import env_utils
 # 定义一个简单的模型
 class SimpleModel(nn.Module):
     def __init__(self):
@@ -125,7 +125,8 @@ def main():
         model_engine.backward(loss)
         model_engine.step()
 
-        MujicaCheckpointer.save_checkpoint("./outputtest")
+        #MujicaCheckpointer.save_checkpoint("./outputtest")
+        model_engine.save_checkpoint("./outputtest")
 
     # 执行一个训练步骤
     # outputs = model_engine(inputs)
