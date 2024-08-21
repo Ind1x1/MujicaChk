@@ -2,9 +2,9 @@ import copy
 from typing import Dict
 from MujicaChk.utils import env_utils
 from MujicaChk.engine.chk_engine import CheckpointEngine
-from MujicaChk.common.constants import CheckpointConstant
+from MujicaChk.common.constants import CheckpointConstant, OPTIMIZER_STATE_DICT
 from MujicaChk.engine.checkpointer import Checkpointer
-
+from MujicaChk.utils.log import default_logger as log
 from MujicaChk.engine.shmengine import (
     MUJICA_CKPT_CONFIG_KEY,
     SharedMemoryEngine,
@@ -48,12 +48,14 @@ class DeepSpeedCheckpointEngine(CheckpointEngine):
         global_shard_num = 1,
         zero_stage = 0,
         comm_backend = "",
+        dp_process_group = None,
         save_timeout = CheckpointConstant.SAVE_TIMEOUT,  
     ):
         self.state_dict: Dict[str, object] = {}
         self.paths: Dict[str, str] = {}
         self.global_shard_num = global_shard_num
         self.zero_stage = zero_stage
+        self.dp_process_group = dp_process_group 
         super().__init__(checkpoint_dir, comm_backend, save_timeout)
 
     def get_saving_ranks(self):
@@ -101,4 +103,28 @@ class DeepSpeedCheckpointEngine(CheckpointEngine):
         conf = CheckpointConfig(step=step, paths=paths)
         success = self.save_state_dict_to_memory(state_dict, conf)
         return success
-        
+
+    @timer    
+    def _load_all_zero_checkpoint_state_dicts(self, zero_ckpt_names):
+        zero_sd_list = []
+        for i, ckpt_name in enumerate(zero_ckpt_names):
+            _state = None
+            if ckpt_name is None:
+                _state = {OPTIMIZER_STATE_DICT: None}
+            elif dist.get_rank(group = self.dp_process_group) == i:
+                log.info(f"[Torch Mujica Load] Loading checkpoint from {ckpt_name}...")
+                partition = torch.load(
+                    ckpt_name, 
+                    map_location='cpu',
+                    )
+                _state = self.get_state_dict_from_memory(partition)
+                log.info(f"[Torch Mujica Load] Loaded checkpoint from {ckpt_name}...")
+            else:
+                _state = {OPTIMIZER_STATE_DICT: None}
+            zero_sd_list.append(_state)
+        zero_optimizer_sd = [sd[OPTIMIZER_STATE_DICT] for sd in zero_sd_list]
+        log.info(f"[Mujica Load] Successfully read {len(zero_optimizer_sd)} ZeRO state_dicts for rank {self._local_rank}")
+        return zero_optimizer_sd
+    
+    def _load_checkpoint(self):
+        pass

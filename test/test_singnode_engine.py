@@ -124,9 +124,10 @@ def main():
         # 执行反向传播
         model_engine.backward(loss)
         model_engine.step()
-
-        #MujicaCheckpointer.save_checkpoint("./outputtest")
-        model_engine.save_checkpoint("./outputtest")
+        state_dict = model_engine.optimizer.state_dict()
+        print(state_dict)
+        MujicaCheckpointer.save_checkpoint("./outputtest")
+        #model_engine.save_checkpoint("./outputtest")
 
     # 执行一个训练步骤
     # outputs = model_engine(inputs)

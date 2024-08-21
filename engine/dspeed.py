@@ -56,7 +56,8 @@ class DeepSpeedCheckpointer(Checkpointer):
             global_shard_num = global_shard_num,
             zero_stage = zero_stage,
             comm_backend = comm_backend,
-            save_timeout = save_timeout
+            save_timeout = save_timeout,
+            dp_process_group = self.engine.optimizer.dp_process_group
         )
 
     """
@@ -104,4 +105,17 @@ class DeepSpeedCheckpointer(Checkpointer):
         Args:
             the same as the DeepSpeed Engine.LOAD_CHECKPOINT
         """
-        
+        original_get_all_zero_checkpoint_state_dicts = self.engine._get_all_zero_checkpoint_state_dicts
+        self.engine._get_all_zero_checkpoint_state_dicts = self.dscheckpointengine._load_all_zero_checkpoint_state_dicts
+        original_load_checkpoint = self.engine.load_checkpoint
+        #TODO 调用原 DeepSpeed load
+        load_path, client_states = self.engine.load_checkpoint(
+            load_dir=load_dir,
+            tag=tag,
+            load_module_strict=load_module_strict,
+            load_optimizer_states=load_optimizer_states,
+            load_lr_scheduler_states=load_lr_scheduler_states,
+            load_module_only=load_module_only,
+            custom_load_fn=custom_load_fn,
+        )
+        return load_path, client_states

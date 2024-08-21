@@ -164,7 +164,7 @@ class SharedMemoryEngine(object):
             if key in state_dict and key in  meta_paths:
                 torch.save(state_dict[key],  meta_paths[key])
 
-    def load_state_dict(self):
+    def load_state_dict(self, read_meta_dict):
         """
         Load the state dict from the shared memory.
 
@@ -173,7 +173,7 @@ class SharedMemoryEngine(object):
                 the second value is the state dict.
         """
         # meta_dict = self.metadata.get()
-        meta_dict = self.meta_dict
+        meta_dict = read_meta_dict
         default_config = CheckpointConfig()
         config = meta_dict.get(MUJICA_CKPT_CONFIG_KEY, default_config)
         if not meta_dict or config.writing_shm:

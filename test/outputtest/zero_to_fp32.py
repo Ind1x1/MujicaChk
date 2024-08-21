@@ -248,11 +248,6 @@ def _zero2_merge_frozen_params(state_dict, zero_model_states):
     print(f"Reconstructed Frozen fp32 state dict with {total_params} params {total_numel} elements")
 
 
-def _has_callable(obj, fn):
-    attr = getattr(obj, fn, None)
-    return callable(attr)
-
-
 def _zero2_merge_trainable_params(state_dict, world_size, fp32_flat_groups, zero_model_states):
     param_shapes = zero_model_states[0].param_shapes
 
@@ -292,7 +287,7 @@ def _zero2_merge_trainable_params(state_dict, world_size, fp32_flat_groups, zero
         avail_numel = full_single_fp32_vector.numel()
         for name, shape in shapes.items():
 
-            unpartitioned_numel = shape.numel() if _has_callable(shape, 'numel') else math.prod(shape)
+            unpartitioned_numel = shape.numel()
             total_numel += unpartitioned_numel
             total_params += 1
 

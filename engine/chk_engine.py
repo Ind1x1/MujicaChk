@@ -221,11 +221,11 @@ class CheckpointEngine(metaclass=ABCMeta):
         #print(f"save_dict_print test\n",state_dict)
         return True
 
-    def get_state_dict_from_memory(self):
+    def get_state_dict_from_memory(self, read_meta_dict):
         state_dict = {}
         default_config = CheckpointConfig()
         # config = self._shm_handler.get_checkpoint_config(default_config)
-        state_dict = self._shm_handler.load_state_dict()
+        state_dict = self._shm_handler.load_state_dict(read_meta_dict)
         state_dict.pop(MUJICA_CKPT_CONFIG_KEY, None)
         return state_dict
     

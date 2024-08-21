@@ -9,6 +9,7 @@ project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 sys.path.insert(0, project_path)
 from MujicaChk.engine.dspeed import DeepSpeedCheckpointer
 from MujicaChk.utils import env_utils
+
 # 定义一个简单的模型
 class SimpleModel(nn.Module):
     def __init__(self):
@@ -78,14 +79,18 @@ def main():
     load_dir = './outputtest'
     tag = None  # 加载最新的检查点
     
-    try:
-        load_path, client_state = model_engine.load_checkpoint(
-            load_dir=load_dir,
-            tag=tag
-        )
-    except Exception as e:
-        print(f"Error loading checkpoint: {e}")
-        load_path, client_state = None, None
+    MujicaCheckpointer = DeepSpeedCheckpointer(model_engine, "./outputtest") 
+    MujicaCheckpointer.load_checkpoint('./outputtest')
+
+
+    # try:
+    #     load_path, client_state = model_engine.load_checkpoint(
+    #         load_dir=load_dir,
+    #         tag=tag
+    #     )
+    # except Exception as e:
+    #     print(f"Error loading checkpoint: {e}")
+    #     load_path, client_state = None, None
 
     # # 检查是否成功加载
     # if load_path is None:
