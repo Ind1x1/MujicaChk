@@ -9,8 +9,11 @@ from deepspeed.runtime.zero.config import ZeroStageEnum
 
 from MujicaChk.engine.checkpointer import Checkpointer
 from MujicaChk.engine.dspeed_engine import DeepSpeedCheckpointEngine
+from MujicaChk.engine.shmengine import SharedMemoryObjectPrefix
 
 from MujicaChk.utils import env_utils
+from MujicaChk.utils.log import default_logger as log
+
 from MujicaChk.common.constants import CheckpointConstant
 
 
@@ -77,6 +80,7 @@ class DeepSpeedCheckpointer(Checkpointer):
     def _save_shm_checkpoint(
         self, save_dir, tag=None, client_state={}, save_latest=True    
     ):
+        log.info(f"{self._local_rank} f")
         torch.save = self.dscheckpointengine._save_state_dict
         self.engine.save_checkpoint(save_dir, tag, client_state, save_latest)
         torch.save = torch_native_save
@@ -105,9 +109,11 @@ class DeepSpeedCheckpointer(Checkpointer):
         Args:
             the same as the DeepSpeed Engine.LOAD_CHECKPOINT
         """
-        original_get_all_zero_checkpoint_state_dicts = self.engine._get_all_zero_checkpoint_state_dicts
-        self.engine._get_all_zero_checkpoint_state_dicts = self.dscheckpointengine._load_all_zero_checkpoint_state_dicts
-        original_load_checkpoint = self.engine.load_checkpoint
+        # original_get_all_zero_checkpoint_state_dicts = self.engine._get_all_zero_checkpoint_state_dicts
+        # self.engine._get_all_zero_checkpoint_state_dicts = self.dscheckpointengine._load_all_zero_checkpoint_state_dicts
+        # original_load_checkpoint = self.engine._load_checkpoint
+        # self.engine._load_checkpoint = self.dscheckpointengine._load_model_checkpoint_state_dicts
+        torch.load = self.dscheckpointengine._load_state_dict
         #TODO 调用原 DeepSpeed load
         load_path, client_states = self.engine.load_checkpoint(
             load_dir=load_dir,
@@ -118,4 +124,9 @@ class DeepSpeedCheckpointer(Checkpointer):
             load_module_only=load_module_only,
             custom_load_fn=custom_load_fn,
         )
+        torch.load = torch_native_load
+        # TODO This may require a step to verify that all rank loads have been completed
+        if self.dscheckpointengine._shm_handler._shm_name == SharedMemoryObjectPrefix.SHM_NAME + str(self._local_rank):
+            self.dscheckpointengine._shm_handler.unlink()
+            log.info(f"{self._local_rank} unlink the shared memory")
         return load_path, client_states

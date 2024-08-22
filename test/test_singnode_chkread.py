@@ -78,9 +78,46 @@ def main():
     # 加载检查点的目录
     load_dir = './outputtest'
     tag = None  # 加载最新的检查点
-    
+
+    # try:
+    #     load_path, client_state = model_engine.load_checkpoint(
+    #         load_dir=load_dir,
+    #         tag=tag
+    #     )
+    # except Exception as e:
+    #     print(f"Error loading checkpoint: {e}")
+    #     load_path, client_state = None, None
+
     MujicaCheckpointer = DeepSpeedCheckpointer(model_engine, "./outputtest") 
     MujicaCheckpointer.load_checkpoint('./outputtest')
+
+    state_dict = model_engine.optimizer.state_dict()
+    print(f"optimizer -read-<> \n {state_dict}")
+    state_dict = model_engine.state_dict()
+    print(f"model -read-<> \n {state_dict}")
+
+     # 创建一些示例数据，并转换为FP16精度
+    inputs = torch.randn(8, 10, device='cuda', dtype=torch.half)  # 推荐的方式
+    labels = torch.randn(8, 10, device='cuda', dtype=torch.half)  # 推荐的方式
+
+    for step in range(3):  # 让训练走两步
+        print(f"----------------<> run {step}")
+        # 执行一个训练步骤
+        outputs = model_engine(inputs)
+        loss = nn.MSELoss()(outputs, labels)
+        
+        # 确保损失也转换为FP16精度
+        loss = loss.half()
+
+        # 执行反向传播
+        model_engine.backward(loss)
+        model_engine.step()
+        state_dict = model_engine.optimizer.state_dict()
+        print(f"optimizer --<> \n {state_dict}")
+        state_dict = model_engine.state_dict()
+        print(f"model --<> \n {state_dict}")
+        MujicaCheckpointer.save_checkpoint("./outputtest")
+
 
 
     # try:
@@ -92,7 +129,7 @@ def main():
     #     print(f"Error loading checkpoint: {e}")
     #     load_path, client_state = None, None
 
-    # # 检查是否成功加载
+    # 检查是否成功加载
     # if load_path is None:
     #     print("Checkpoint loading failed.")
     # else:

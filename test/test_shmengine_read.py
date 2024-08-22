@@ -10,9 +10,9 @@ sys.path.insert(0, project_path)
 from MujicaChk.engine.shmengine import SharedMemoryEngine
 
 def main():
-    model_state_path = "./outputtest/global_step1/mp_rank_00_model_states.pt"
+    model_state_path = "./outputtest/global_step2/mp_rank_00_model_states.pt"
     optim_state_paths = [
-        "./outputtest/global_step1/zero_pp_rank_0_mp_rank_00_optim_states.pt",
+        "./outputtest/global_step2/zero_pp_rank_0_mp_rank_00_optim_states.pt",
     ]
     
     # 加载模型状态

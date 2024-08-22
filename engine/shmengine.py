@@ -75,7 +75,7 @@ class SharedMemoryEngine(object):
         #TODO
         #self.metadata = CheckpointDict(name=meta_name)
         self._creation_FLAG = True
-
+        self._create_meta_FLAG = False
     def close(self):
         if self.shared_memory:
             self.shared_memory.close()
@@ -92,6 +92,7 @@ class SharedMemoryEngine(object):
     
     def reset(self):
         self._creation_FLAG = True
+        self._create_meta_FLAG = False
 
     def _create_tensor_meta(self, value: torch.Tensor):
         if not torch.is_tensor(value):
@@ -125,15 +126,17 @@ class SharedMemoryEngine(object):
     """
     def init_meta_dict(self,state_dict):
         self.meta_dict = _traverse_state_dict(state_dict, self._create_tensor_meta)
-        # self.meta_dict[MUJICA_CKPT_CONFIG_KEY] = CheckpointConfig()
+        #self.meta_dict[MUJICA_CKPT_CONFIG_KEY] = CheckpointConfig()
         # print(self.meta_dict)
+        self._create_meta_FLAG = False
         return
 
     def init_shared_memory(self, create=False, size=0):
         self.shared_memory = _create_shared_memory(
             self._shm_name, create=create, size=size
         )
-        self._creation_FLAG = False
+        if create == True:
+            self._creation_FLAG = False
 
     def save_state_dict(self, state_dict):
         if self._creation_FLAG == True:
@@ -142,10 +145,13 @@ class SharedMemoryEngine(object):
             # )
             self.init_meta_dict(state_dict)
             self.init_shared_memory(create=True, size=self._buffer_size)
+        elif self._create_meta_FLAG == True:
+            self.init_meta_dict(state_dict)
         # get existing meta_dict
         # else:
         #     log.info("creation once!")
         #     meta_dict = self.metadata.get(local=True)
+        #print(self.meta_dict)
 
         ckpt_conf: CheckpointConfig = self.meta_dict[MUJICA_CKPT_CONFIG_KEY]
         ckpt_conf.writing_shm = True
@@ -162,6 +168,7 @@ class SharedMemoryEngine(object):
         meta_paths = state_dict[MUJICA_CKPT_CONFIG_KEY].paths
         for key in [CheckpointConstant.MODEL_STATES_NAME,CheckpointConstant.OPTIM_STATES_NAME]:
             if key in state_dict and key in  meta_paths:
+                state_dict[key][MUJICA_CKPT_CONFIG_KEY] = state_dict[MUJICA_CKPT_CONFIG_KEY]
                 torch.save(state_dict[key],  meta_paths[key])
 
     def load_state_dict(self, read_meta_dict):
@@ -180,6 +187,7 @@ class SharedMemoryEngine(object):
             return {}
         if self.shared_memory is None or self._creation_FLAG:
             self.init_shared_memory(create=False)
+            self._creation_FLAG = True
         if not self.shared_memory:
             return {}
         state_dict = _traverse_read_dict_from_shm(meta_dict, self.shared_memory)

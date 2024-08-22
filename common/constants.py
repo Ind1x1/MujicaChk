@@ -11,4 +11,6 @@ class CheckpointConstant(object):
     OPTIM_STATES_NAME = "optim_states"
     SAVE_TIMEOUT = 600
 
-OPTIMIZER_STATE_DICT = "optimizer_state_dict"
+class CheckpointMetaKey(object):
+    MODEL = "model"
+    OPTIMIZER_STATE_DICT = "optimizer_state_dict"

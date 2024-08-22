@@ -2,7 +2,7 @@ import copy
 from typing import Dict
 from MujicaChk.utils import env_utils
 from MujicaChk.engine.chk_engine import CheckpointEngine
-from MujicaChk.common.constants import CheckpointConstant, OPTIMIZER_STATE_DICT
+from MujicaChk.common.constants import CheckpointConstant, CheckpointMetaKey
 from MujicaChk.engine.checkpointer import Checkpointer
 from MujicaChk.utils.log import default_logger as log
 from MujicaChk.engine.shmengine import (
@@ -103,28 +103,62 @@ class DeepSpeedCheckpointEngine(CheckpointEngine):
         conf = CheckpointConfig(step=step, paths=paths)
         success = self.save_state_dict_to_memory(state_dict, conf)
         return success
-
-    @timer    
-    def _load_all_zero_checkpoint_state_dicts(self, zero_ckpt_names):
-        zero_sd_list = []
-        for i, ckpt_name in enumerate(zero_ckpt_names):
-            _state = None
-            if ckpt_name is None:
-                _state = {OPTIMIZER_STATE_DICT: None}
-            elif dist.get_rank(group = self.dp_process_group) == i:
-                log.info(f"[Torch Mujica Load] Loading checkpoint from {ckpt_name}...")
-                partition = torch.load(
-                    ckpt_name, 
-                    map_location='cpu',
-                    )
-                _state = self.get_state_dict_from_memory(partition)
-                log.info(f"[Torch Mujica Load] Loaded checkpoint from {ckpt_name}...")
-            else:
-                _state = {OPTIMIZER_STATE_DICT: None}
-            zero_sd_list.append(_state)
-        zero_optimizer_sd = [sd[OPTIMIZER_STATE_DICT] for sd in zero_sd_list]
-        log.info(f"[Mujica Load] Successfully read {len(zero_optimizer_sd)} ZeRO state_dicts for rank {self._local_rank}")
-        return zero_optimizer_sd
     
-    def _load_checkpoint(self):
-        pass
+    # @timer
+    # def _load_state_dict(self, path: str, map_location=None):
+    #     def load_func(path, map_location):
+    #         return torch_native_load(path, map_location = map_location)
+    #     meta_dict = load_func(path, map_location = lambda storage, loc: storage)
+    #     log.info(f"[Torch Mujica Load] Loading checkpoint meta from {path}...")
+    #     #_state = self.load_from_memory(path, map_location = map_location)
+    #     _state = self.get_state_dict_from_memory(meta_dict)
+    #     log.info(f"[Torch Mujica Load] Getted state dict from shared memory")
+
+    #     return _state
+    
+    @timer
+    def _load_state_dict(self, path: str, map_location=None):
+        def load_func(path, map_location):
+            return torch_native_load(path, map_location = map_location)
+        meta_dict = load_func(path, map_location = lambda storage, loc: storage)
+        log.info(f"[Torch Mujica Load] Loading checkpoint meta from {path}...")
+        #_state = self.load_from_memory(path, map_location = map_location)
+        _state = self.get_state_dict_from_memory(meta_dict)
+        print(f"!!!{meta_dict}")
+        log.info(f"[Torch Mujica Load] Getted state dict from shared memory")
+        return _state
+
+    # def load_from_memory(self, path: str, map_location=None):
+    #     def load_func(path, map_location):
+    #         return torch_native_load(path, map_location = map_location)
+    #     meta_dict = load_func(path, map_location = lambda storage, loc: storage)
+    #     if path.endswith(_DS_MODEL_SD_FILE_SUFFIX):
+    #         _model_FLAG = True
+    #     elif path.endswith(_DS_OPTIM_SD_FILE_SUFFIX):
+    #         _model_FLAG = False
+    #     _state = self.get_state_dict_from_memory(meta_dict, _model_FLAG)
+    #     return _state
+    
+    # This function has been deprecated
+    # @timer    
+    # def _load_all_zero_checkpoint_state_dicts(self, zero_ckpt_names):
+    #     zero_sd_list = []
+    #     for i, ckpt_name in enumerate(zero_ckpt_names):
+    #         _state = None
+    #         if ckpt_name is None:
+    #             _state = {CheckpointMetaKey.OPTIMIZER_STATE_DICT: None}
+    #         elif dist.get_rank(group = self.dp_process_group) == i:
+    #             log.info(f"[Torch Mujica Load] Loading checkpoint from {ckpt_name}...")
+    #             partition = torch.load(
+    #                 ckpt_name, 
+    #                 map_location='cpu',
+    #                 )
+    #             _state = self.get_state_dict_from_memory(partition)
+    #             log.info(f"[Torch Mujica Load] Loaded checkpoint from {ckpt_name}")
+    #         else:
+    #             _state = {CheckpointMetaKey.OPTIMIZER_STATE_DICT: None}
+    #         zero_sd_list.append(_state)
+    #     zero_optimizer_sd = [sd[CheckpointMetaKey.OPTIMIZER_STATE_DICT] for sd in zero_sd_list]
+    #     log.info(f"[Mujica Load] Successfully read {len(zero_optimizer_sd)} ZeRO state_dicts for rank {self._local_rank}")
+    #     return zero_optimizer_sd
+    

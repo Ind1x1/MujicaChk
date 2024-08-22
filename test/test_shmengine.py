@@ -7,7 +7,7 @@ sys.path.insert(0, project_path)
 from dataclasses import dataclass
 from typing import Tuple, Callable, Any, Mapping, List
 
-from engine.shmengine import SharedMemoryEngine
+from MujicaChk.engine.shmengine import SharedMemoryEngine
 
 import torch
 

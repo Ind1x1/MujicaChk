@@ -125,9 +125,11 @@ def main():
         model_engine.backward(loss)
         model_engine.step()
         state_dict = model_engine.optimizer.state_dict()
-        print(state_dict)
+        print(f"optimizer --<> \n {state_dict}")
+        state_dict = model_engine.state_dict()
+        print(f"model --<> \n {state_dict}")
         MujicaCheckpointer.save_checkpoint("./outputtest")
-        #model_engine.save_checkpoint("./outputtest")
+        # model_engine.save_checkpoint("./outputtest")
 
     # 执行一个训练步骤
     # outputs = model_engine(inputs)

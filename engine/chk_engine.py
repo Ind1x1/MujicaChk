@@ -21,7 +21,7 @@ from MujicaChk.utils.time_utils import (
     timer
 )
 
-from MujicaChk.common.constants import CheckpointConstant
+from MujicaChk.common.constants import CheckpointConstant,CheckpointMetaKey
 
 from MujicaChk.utils.chk_utils import TensorMeta
 from MujicaChk.utils.log import default_logger as log
@@ -223,9 +223,23 @@ class CheckpointEngine(metaclass=ABCMeta):
 
     def get_state_dict_from_memory(self, read_meta_dict):
         state_dict = {}
-        default_config = CheckpointConfig()
+        # default_config = CheckpointConfig()
         # config = self._shm_handler.get_checkpoint_config(default_config)
+        # Get optimizer state_dict
+        # if _model_FLAG == False or self._local_rank == 0:
+        #     state_dict = self._shm_handler.load_state_dict(read_meta_dict)
+        # elif _model_FLAG == True and self._local_rank != 0:
+        #     self._shm_handler_model_rank_0 =  SharedMemoryEngine(local_rank=0)
+        #     state_dict = self._shm_handler_model_rank_0.load_state_dict(read_meta_dict)
+        #     self._shm_handler_model_rank_0.close()
         state_dict = self._shm_handler.load_state_dict(read_meta_dict)
+        # Read_key = next(iter(read_meta_dict))
+        # if Read_key == CheckpointMetaKey.OPTIMIZER_STATE_DICT or self._local_rank == 0:
+        #     state_dict = self._shm_handler.load_state_dict(read_meta_dict)
+        # if Read_key == CheckpointMetaKey.MODEL and self._local_rank != 0:
+        #     shm = SharedMemoryEngine(local_rank = 0)
+        #     state_dict = shm.load_state_dict(read_meta_dict)
+        #     shm.close()
         state_dict.pop(MUJICA_CKPT_CONFIG_KEY, None)
         return state_dict
     
