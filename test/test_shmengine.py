@@ -31,9 +31,16 @@ print("--------------------------meta_dict-------------------------")
 for key, value in shm.meta_dict.items():
     print(f"{key}: {value}")
 
-restored_state_dict = shm.load_state_dict()
+restored_state_dict = shm.load_state_dict(shm.meta_dict)
 
 print("-----------------------restored_dict------------------------")
 for key, value in restored_state_dict.items():
     print(f"{key}: {value}")
+
+restored_state_dict = shm.load_state_dict(shm.meta_dict)
+
+print("-----------------------restored_dict------------------------")
+for key, value in restored_state_dict.items():
+    print(f"{key}: {value}")
+
 

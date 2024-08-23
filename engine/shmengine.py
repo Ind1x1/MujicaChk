@@ -76,6 +76,7 @@ class SharedMemoryEngine(object):
         #self.metadata = CheckpointDict(name=meta_name)
         self._creation_FLAG = True
         self._create_meta_FLAG = False
+
     def close(self):
         if self.shared_memory:
             self.shared_memory.close()
@@ -124,7 +125,7 @@ class SharedMemoryEngine(object):
     data:  [TensorMeta(shape=(2, 2), dtype=torch.float32, element_size=4, numel=4, offset=36), 
             TensorMeta(shape=(2, 3), dtype=torch.float32, element_size=4, numel=6, offset=52)]
     """
-    def init_meta_dict(self,state_dict):
+    def init_meta_dict(self, state_dict):
         self.meta_dict = _traverse_state_dict(state_dict, self._create_tensor_meta)
         #self.meta_dict[MUJICA_CKPT_CONFIG_KEY] = CheckpointConfig()
         # print(self.meta_dict)
@@ -137,6 +138,11 @@ class SharedMemoryEngine(object):
         )
         if create == True:
             self._creation_FLAG = False
+
+    # def init_rank0_shared_memory(self):
+    #     self.shared_memory = _create_shared_memory(
+    #         self._shm_name, create=False, size=0
+    #     )
 
     def save_state_dict(self, state_dict):
         if self._creation_FLAG == True:

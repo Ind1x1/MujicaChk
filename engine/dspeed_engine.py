@@ -17,6 +17,14 @@ from MujicaChk.utils.time_utils import (
     timer
 )
 
+from MujicaChk.engine.shmengine import (
+    MUJICA_CKPT_CONFIG_KEY,
+    SharedMemoryEngine,
+    CheckpointConfig,
+    SharedMemoryObjectPrefix
+)
+
+
 _DS_MODEL_SD_FILE_SUFFIX = "model_states.pt"
 _DS_OPTIM_SD_FILE_SUFFIX = "optim_states.pt"
 
@@ -123,8 +131,13 @@ class DeepSpeedCheckpointEngine(CheckpointEngine):
         meta_dict = load_func(path, map_location = lambda storage, loc: storage)
         log.info(f"[Torch Mujica Load] Loading checkpoint meta from {path}...")
         #_state = self.load_from_memory(path, map_location = map_location)
-        _state = self.get_state_dict_from_memory(meta_dict)
-        print(f"!!!{meta_dict}")
+        Read_key = next(iter(meta_dict))
+        if Read_key == CheckpointMetaKey.OPTIMIZER_STATE_DICT: 
+            _state = self.get_state_dict_from_memory(meta_dict)
+        if Read_key == CheckpointMetaKey.MODEL:
+            local_rank_0_shm_handler =SharedMemoryEngine(0, host=False)
+            _state_copy = local_rank_0_shm_handler.load_state_dict(meta_dict)
+            _state = copy.deepcopy(_state_copy)
         log.info(f"[Torch Mujica Load] Getted state dict from shared memory")
         return _state
 

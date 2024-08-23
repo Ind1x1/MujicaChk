@@ -80,7 +80,7 @@ class DeepSpeedCheckpointer(Checkpointer):
     def _save_shm_checkpoint(
         self, save_dir, tag=None, client_state={}, save_latest=True    
     ):
-        log.info(f"{self._local_rank} f")
+        log.info(f"{self._local_rank} Saving Shared Memory Checkpoint")
         torch.save = self.dscheckpointengine._save_state_dict
         self.engine.save_checkpoint(save_dir, tag, client_state, save_latest)
         torch.save = torch_native_save
