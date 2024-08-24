@@ -1,8 +1,25 @@
 # MujicaChk
-The project hopes to use XXXXXXXXX technology to realize efficient large model, large-scale training memory checkpoint and fast fault recovery
+The project hopes to realize efficient large model, large-scale training memory checkpoint and fast fault recovery
 
-Part of the project code references dlrover-flashcheckpoint
+Part of the project code references dlrover-flashcheckpoint/Gemini
 
-Key parts of the code are being tested and waiting to be uploaded
+#Get Started
 
-还在GO，还在GO。
+MujicaChk builds on DeepSpeed and can be easily embedded into training
+
+##Example
+
+###Save
+'''
+        >>> model, optimizer, _, lr_scheduler = deepspeed.initialize(...)
+        >>> MujicaCheckpointer = DeepSpeedCheckpointer(engine, save_dir) 
+        >>> if args.save_model_step is not None and global_step % args.save_model_step == 0:
+        >>>     MujicaCheckpointer.save_checkpoint( save_dir)
+'''
+
+###Load
+'''
+        >>> model, optimizer, _, lr_scheduler = deepspeed.initialize(...)
+        >>> MujicaCheckpointer = DeepSpeedCheckpointer(engine, save_dir)
+        >>> MujicaCheckpointer.load_checkpoint( save_dir)
+'''
