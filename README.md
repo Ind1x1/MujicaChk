@@ -3,23 +3,27 @@ The project hopes to realize efficient large model, large-scale training memory 
 
 Part of the project code references dlrover-flashcheckpoint/Gemini
 
-#Get Started
+MujicaChk has no effect on the accuracy of the training and still recommends that users save normally with `torch.save` at the end of each epoch to ensure training.
+
+# Get Started
 
 MujicaChk builds on DeepSpeed and can be easily embedded into training
 
-##Example
+## Example
 
-###Save
-'''
+### Save
+
+```
         >>> model, optimizer, _, lr_scheduler = deepspeed.initialize(...)
         >>> MujicaCheckpointer = DeepSpeedCheckpointer(engine, save_dir) 
         >>> if args.save_model_step is not None and global_step % args.save_model_step == 0:
         >>>     MujicaCheckpointer.save_checkpoint( save_dir)
-'''
+```
 
-###Load
-'''
+### Load
+
+```
         >>> model, optimizer, _, lr_scheduler = deepspeed.initialize(...)
         >>> MujicaCheckpointer = DeepSpeedCheckpointer(engine, save_dir)
         >>> MujicaCheckpointer.load_checkpoint( save_dir)
-'''
+```
